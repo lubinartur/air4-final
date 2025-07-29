@@ -17,8 +17,9 @@ async def chat(req: PromptRequest):
     try:
         headers = {
             "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-            "HTTP-Referer": "https://yourdomain.com",
-            "X-Title": "ar4gpt"
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://yourdomain.com",  # можешь оставить
+            "X-Title": "ar4gpt"                         # можно оставить
         }
 
         messages = [{"role": "user", "content": req.message}]
