@@ -1,22 +1,23 @@
-import os
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 import openai
+import os
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = FastAPI()
 
-openai.api_key = os.getenv("OPENROUTER_API_KEY")
-openai.api_base = "https://openrouter.ai/api/v1"
-
 @app.get("/")
-def root():
-    return {"message": "AR4GPT is alive!"}
+async def root():
+    return {"message": "ar4gpt is alive"}
 
 @app.post("/chat")
-def chat(prompt: str):
+async def chat(request: Request):
+    data = await request.json()
+    prompt = data.get("prompt", "")
+
     response = openai.ChatCompletion.create(
-        model="mistralai/mixtral-8x7b-instruct",
-        messages=[
-            {"role": "user", "content": prompt}
-        ]
+        model="mistralai/mistral-7b-instruct",
+        messages=[{"role": "user", "content": prompt}]
     )
-    return {"reply": response['choices'][0]['message']['content']}
+
+    return {"response": response['choices'][0]['message']['content']}
