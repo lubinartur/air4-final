@@ -7,3 +7,5 @@ services:
     envVars:
       - key: PORT
         value: 10000
+      - key: OPENAI_API_KEY
+        value: your_openai_key_here  # <--- замени на свой ключ
