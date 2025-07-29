@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from pydantic import BaseModel
 import httpx
 import os
@@ -18,30 +18,32 @@ async def chat(req: PromptRequest):
         headers = {
             "Authorization": f"Bearer {OPENROUTER_API_KEY}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://yourdomain.com",  # можешь оставить
-            "X-Title": "ar4gpt"                         # можно оставить
+            "HTTP-Referer": "https://yourdomain.com",
+            "X-Title": "ar4gpt"
         }
 
         messages = [{"role": "user", "content": req.message}]
-        
         payload = {
             "model": MODEL,
             "messages": messages,
         }
 
         async with httpx.AsyncClient() as client:
-            r = await client.post("https://openrouter.ai/api/v1/chat/completions", json=payload, headers=headers)
+            r = await client.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                json=payload,
+                headers=headers
+            )
             r.raise_for_status()
-            data = r.json()
-            reply = data["choices"][0]["message"]["content"]
+            data = await r.json()  # ← ОБЯЗАТЕЛЬНО await здесь
 
+            reply = data["choices"][0]["message"]["content"]
             return {
                 "reply": reply,
                 "chat_id": req.chat_id
             }
 
     except Exception as e:
-        # Отладка: выведем ошибку и отправим пользователю
         return {
             "error": str(e),
             "model": MODEL,
