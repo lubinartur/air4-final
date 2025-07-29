@@ -1,26 +1,18 @@
-from fastapi import FastAPI, Request
 import openai
 import os
 
-app = FastAPI()
+# Вставь свой OpenRouter API ключ сюда
+openai.api_key = "sk-..."
+openai.api_base = "https://openrouter.ai/api/v1"
 
-# Получаем API-ключ из переменных окружения
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Список доступных моделей можно получить здесь: https://openrouter.ai/docs#models
 
-@app.get("/")
-async def root():
-    return {"message": "ar4gpt is running"}
+response = openai.ChatCompletion.create(
+    model="mistralai/mistral-7b-instruct",
+    messages=[
+        {"role": "system", "content": "Ты умный, токсично-доброжелательный ассистент. Отвечай кратко, но по делу. Стиль — как у лучшего друга-хакера."},
+        {"role": "user", "content": "Что ты знаешь о Лунной сонате Бетховена?"}
+    ]
+)
 
-@app.post("/chat")
-async def chat(request: Request):
-    data = await request.json()
-    messages = data.get("messages")
-
-    if not messages:
-        return {"error": "Missing 'messages' in request body"}
-
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",  # или gpt-4, если есть доступ
-        messages=messages
-    )
-    return response
+print(response.choices[0].message.content)
