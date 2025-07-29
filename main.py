@@ -6,7 +6,8 @@ import os
 app = FastAPI()
 
 class PromptRequest(BaseModel):
-    prompt: str
+    message: str
+    chat_id: int
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 MODEL = "mistralai/mistral-7b-instruct"
@@ -19,7 +20,7 @@ async def chat(req: PromptRequest):
         "X-Title": "ar4gpt"
     }
 
-    messages = [{"role": "user", "content": req.prompt}]
+    messages = [{"role": "user", "content": req.message}]
     
     payload = {
         "model": MODEL,
@@ -30,9 +31,9 @@ async def chat(req: PromptRequest):
         r = await client.post("https://openrouter.ai/api/v1/chat/completions", json=payload, headers=headers)
         r.raise_for_status()
         data = r.json()
-        return {"reply": data["choices"][0]["message"]["content"]}
+        reply = data["choices"][0]["message"]["content"]
 
-# Запуск сервера
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
+        return {
+            "reply": reply,
+            "chat_id": req.chat_id  # вернуть chat_id обратно, чтобы n8n мог его использовать
+        }
