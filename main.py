@@ -1,31 +1,23 @@
-from fastapi import FastAPI, Request
-import httpx
+from fastapi import FastAPI
+from pydantic import BaseModel
+import openai
 import os
 
 app = FastAPI()
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-MODEL = "mistralai/mistral-7b-instruct:free"  # или любой другой с https://openrouter.ai/docs#models
+openai.api_key = os.getenv("OPENROUTER_API_KEY")
+openai.api_base = "https://openrouter.ai/api/v1"
+
+class Message(BaseModel):
+    message: str
 
 @app.post("/chat")
-async def chat(request: Request):
-    data = await request.json()
-    prompt = data.get("prompt")
-
-    headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "HTTP-Referer": "https://ar4gpt.onrender.com",
-        "X-Title": "ar4gpt"
-    }
-
-    payload = {
-        "model": MODEL,
-        "messages": [
-            {"role": "user", "content": prompt}
+async def chat(msg: Message):
+    response = openai.ChatCompletion.create(
+        model="mistralai/mistral-7b-instruct",
+        messages=[
+            {"role": "system", "content": "Ты умный помощник."},
+            {"role": "user", "content": msg.message}
         ]
-    }
-
-    async with httpx.AsyncClient() as client:
-        response = await client.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload)
-
-    return response.json()
+    )
+    return {"response": response.choices[0].message["content"]}
