@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from pydantic import BaseModel
 import httpx
 import os
@@ -35,5 +35,5 @@ async def chat(req: PromptRequest):
 
         return {
             "reply": reply,
-            "chat_id": req.chat_id  # вернуть chat_id обратно, чтобы n8n мог его использовать
+            "chat_id": req.chat_id
         }
