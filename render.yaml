@@ -6,4 +6,4 @@ services:
     startCommand: uvicorn main:app --host 0.0.0.0 --port 10000
     envVars:
       - key: OPENROUTER_API_KEY
-        value: sk-or-... # твой ключ, но лучше задать его в UI Render как secret
+        value: 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
