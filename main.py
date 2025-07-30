@@ -5,7 +5,7 @@ import os
 
 app = FastAPI()
 
-# CORS — можно оставить, если вдруг нужно из браузера
+# Разрешаем CORS (по желанию)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -14,8 +14,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Ключ OpenRouter — можешь задать в .env или вписать напрямую
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY") or "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"
+# API-ключ OpenRouter
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY") or "sk-or-вставь_тут_свой_ключ"
 
 @app.post("/chat")
 async def chat(request: Request):
@@ -27,6 +27,7 @@ async def chat(request: Request):
         if not message or not chat_id:
             return {"error": "Missing message or chat_id"}
 
+        # Запрос к OpenRouter
         payload = {
             "model": "mistralai/mistral-7b-instruct",
             "messages": [
@@ -38,12 +39,16 @@ async def chat(request: Request):
         headers = {
             "Authorization": f"Bearer {OPENROUTER_API_KEY}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://ar4gpt.onrender.com",  # Укажи свой домен, если хочешь
+            "HTTP-Referer": "https://ar4gpt.onrender.com",  # Можешь указать свой домен
             "X-Title": "ar4gpt"
         }
 
         async with httpx.AsyncClient() as client:
-            response = await client.post("https://openrouter.ai/api/v1/chat/completions", json=payload, headers=headers)
+            response = await client.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                json=payload,
+                headers=headers
+            )
 
         if response.status_code != 200:
             return {
@@ -52,15 +57,8 @@ async def chat(request: Request):
                 "details": await response.json()
             }
 
-        try:
-            res = response.json()
-            reply = res["choices"][0]["message"]["content"]
-        except Exception as parse_err:
-            return {
-                "input": {"chat_id": chat_id},
-                "error": f"Response parse error: {str(parse_err)}",
-                "raw_response": await response.aread()
-            }
+        res = await response.json()
+        reply = res["choices"][0]["message"]["content"]
 
         return {
             "input": {"chat_id": chat_id},
@@ -69,6 +67,6 @@ async def chat(request: Request):
 
     except Exception as e:
         return {
-            "input": {"chat_id": data.get("chat_id")},
+            "input": {"chat_id": data.get("chat_id", "unknown")},
             "error": f"Internal server error: {str(e)}"
         }
