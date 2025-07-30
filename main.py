@@ -15,7 +15,7 @@ app.add_middleware(
 )
 
 # Ключ OpenRouter — можешь задать в .env или вписать напрямую
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY") or "sk-ВАШ_КЛЮЧ"
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY") or "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"
 
 @app.post("/chat")
 async def chat(request: Request):
@@ -28,7 +28,7 @@ async def chat(request: Request):
             return {"error": "Missing message or chat_id"}
 
         payload = {
-            "model": "mistral/mistral-7b-instruct",
+            "model": "mistralai/mistral-7b-instruct",
             "messages": [
                 {"role": "system", "content": "Ты — локальный помощник, отвечай коротко, по делу."},
                 {"role": "user", "content": message}
