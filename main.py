@@ -5,7 +5,7 @@ import os
 
 app = FastAPI()
 
-# Опционально: разрешаем CORS
+# CORS — можно оставить, если вдруг нужно из браузера
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -14,7 +14,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY") or "sk-or-..."  # Вставь сюда свой ключ или передай через env
+# Ключ OpenRouter — можешь задать в .env или вписать напрямую
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY") or "sk-ВАШ_КЛЮЧ"
 
 @app.post("/chat")
 async def chat(request: Request):
@@ -26,7 +27,6 @@ async def chat(request: Request):
         if not message or not chat_id:
             return {"error": "Missing message or chat_id"}
 
-        # Подготовка запроса к OpenRouter
         payload = {
             "model": "mistral/mistral-7b-instruct",
             "messages": [
@@ -38,21 +38,37 @@ async def chat(request: Request):
         headers = {
             "Authorization": f"Bearer {OPENROUTER_API_KEY}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://yourdomain.com",  # или твой реальный сайт
+            "HTTP-Referer": "https://ar4gpt.onrender.com",  # Укажи свой домен, если хочешь
             "X-Title": "ar4gpt"
         }
 
         async with httpx.AsyncClient() as client:
             response = await client.post("https://openrouter.ai/api/v1/chat/completions", json=payload, headers=headers)
-            if response.status_code != 200:
-                return {
-                    "error": f"OpenRouter error {response.status_code}",
-                    "details": response.text
-                }
 
+        if response.status_code != 200:
+            return {
+                "input": {"chat_id": chat_id},
+                "error": f"OpenRouter error {response.status_code}",
+                "details": await response.aread()
+            }
+
+        try:
             res = response.json()
             reply = res["choices"][0]["message"]["content"]
-            return {"reply": reply, "chat_id": chat_id}
+        except Exception as parse_err:
+            return {
+                "input": {"chat_id": chat_id},
+                "error": f"Response parse error: {str(parse_err)}",
+                "raw_response": await response.aread()
+            }
+
+        return {
+            "input": {"chat_id": chat_id},
+            "reply": reply
+        }
 
     except Exception as e:
-        return {"error": str(e)}
+        return {
+            "input": {"chat_id": data.get("chat_id")},
+            "error": f"Internal server error: {str(e)}"
+        }
