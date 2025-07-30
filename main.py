@@ -27,7 +27,7 @@ async def chat(request: Request):
             return {"error": "Missing message or chat_id", "input": {"chat_id": chat_id}}
 
         payload = {
-            "model": "openchat/openchat-3.5-0106",
+            "model": "openai/gpt-3.5-turbo-instruct",
             "messages": [
                 {
                     "role": "system",
