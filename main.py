@@ -5,7 +5,7 @@ import os
 
 app = FastAPI()
 
-# Разрешаем CORS (по желанию)
+# CORS — можно оставить
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -14,8 +14,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# API-ключ OpenRouter
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY") or "sk-or-вставь_тут_свой_ключ"
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY") or "sk-or-v1-..."
 
 @app.post("/chat")
 async def chat(request: Request):
@@ -25,9 +24,8 @@ async def chat(request: Request):
         chat_id = data.get("chat_id")
 
         if not message or not chat_id:
-            return {"error": "Missing message or chat_id"}
+            return {"error": "Missing message or chat_id", "input": {"chat_id": chat_id}}
 
-        # Запрос к OpenRouter
         payload = {
             "model": "mistralai/mistral-7b-instruct",
             "messages": [
@@ -39,7 +37,7 @@ async def chat(request: Request):
         headers = {
             "Authorization": f"Bearer {OPENROUTER_API_KEY}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://ar4gpt.onrender.com",  # Можешь указать свой домен
+            "HTTP-Referer": "https://ar4gpt.onrender.com",
             "X-Title": "ar4gpt"
         }
 
@@ -51,13 +49,18 @@ async def chat(request: Request):
             )
 
         if response.status_code != 200:
+            try:
+                error_data = response.json()
+            except Exception:
+                error_data = await response.aread()
             return {
                 "input": {"chat_id": chat_id},
                 "error": f"OpenRouter error {response.status_code}",
-                "details": await response.json()
+                "details": error_data
             }
 
-        res = await response.json()
+        # ВАЖНО: .json() у httpx НЕ async
+        res = response.json()
         reply = res["choices"][0]["message"]["content"]
 
         return {
@@ -67,6 +70,6 @@ async def chat(request: Request):
 
     except Exception as e:
         return {
-            "input": {"chat_id": data.get("chat_id", "unknown")},
+            "input": {"chat_id": data.get("chat_id")},
             "error": f"Internal server error: {str(e)}"
         }
