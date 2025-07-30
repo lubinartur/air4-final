@@ -49,7 +49,7 @@ async def chat(request: Request):
             return {
                 "input": {"chat_id": chat_id},
                 "error": f"OpenRouter error {response.status_code}",
-                "details": await response.aread()
+                "details": await response.json()
             }
 
         try:
