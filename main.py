@@ -14,7 +14,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY") or "sk-or-v1-..."
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY") or "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"
 
 @app.post("/chat")
 async def chat(request: Request):
